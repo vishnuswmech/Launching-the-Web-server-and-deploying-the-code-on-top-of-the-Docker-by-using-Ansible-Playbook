@@ -1,0 +1,63 @@
+- name: Configuring, deploying the Managed node and expose the  Docker container to public
+  hosts: managednode
+  become: yes
+  tasks:
+   - name: Configuring Yum repo for Docker installation
+     yum_repository:
+       name: Docker       
+       description: Docker repo
+       baseurl: https://download.docker.com/linux/centos/8/x86_64/stable/
+       gpgcheck: no
+
+   - name: mount
+     file:
+       path: /root/mountpointforcontainer
+       state: directory
+
+   - name: file
+     copy:
+       dest: /root/mountpointforcontainer/exposechecking.html
+       content: Congratulations!Final test passed
+       
+
+   - name: Python3 installation
+     yum:
+       name: python3
+       state: present
+
+   - name: Installing Docker module in Python using pip
+     pip:
+       name: docker
+
+   - name: Installing IP tables
+     yum:
+       name: iptables-services
+       state: present
+
+   - name: Docker installation 
+     yum:
+       name: docker-ce-19.03.15-3.el8.x86_64
+       state: present
+
+   - name: Start and enable the docker service
+     service:
+       name: docker
+       state: started
+       enabled: yes
+
+   - name: Pull the HTTPD server image from DockerHub 
+     docker_image:
+       name: httpd
+       source: pull
+
+   - name: Run Docker container and volume mount 
+     docker_container:
+       name: httpd140
+       image: httpd
+       state: started
+       detach: yes
+       ports: 8040:80
+       volumes: 
+        - /root/mountpointforcontainer:/usr/local/apache2/htdocs/
+   
+      
